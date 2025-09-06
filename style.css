@@ -1,0 +1,126 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+body {
+  background: linear-gradient(-45deg, #89f7fe, #66a6ff, #fbc2eb, #a6c1ee);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
+  color: #333;
+  text-align: center;
+  padding: 20px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+@keyframes gradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+h1 {
+  font-size: 2.2rem;
+  color: #fff;
+  text-shadow: 2px 2px 6px rgba(0,0,0,0.3);
+  margin: 20px 0;
+  animation: fadeInDown 1s ease;
+}
+
+p {
+  font-size: 1.1rem;
+  margin-bottom: 30px;
+  color: #fefefe;
+  background: rgba(0,0,0,0.2);
+  padding: 8px 14px;
+  border-radius: 8px;
+  display: inline-block;
+  animation: fadeIn 2s ease;
+}
+
+h3 {
+  margin: 20px 0 10px;
+  color: #222;
+  font-weight: 600;
+  animation: slideIn 1s ease;
+}
+
+audio {
+  margin: 10px 0 20px;
+  width: 80%;
+  max-width: 400px;
+  filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.2));
+  border-radius: 10px;
+}
+
+#slide {
+  width: 90%;
+  max-width: 360px;
+  border-radius: 12px;
+  margin: 15px 0;
+  box-shadow: 0px 8px 16px rgba(0,0,0,0.3);
+  transition: transform 0.3s ease;
+}
+
+#slide:hover {
+  transform: scale(1.05);
+}
+
+button {
+  background: #317EFB;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  margin: 8px;
+  border-radius: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.3s;
+  box-shadow: 0px 6px 12px rgba(0,0,0,0.2);
+}
+
+button:hover {
+  background: #255ec7;
+  transform: translateY(-3px);
+}
+
+button[onclick="downloadLecture()"] {
+  background: #28a745;
+}
+
+button[onclick="downloadLecture()"]:hover {
+  background: #1e7e34;
+}
+
+.footer {
+  margin-top: auto;
+  font-size: 0.85rem;
+  color: #fff;
+  background: rgba(0,0,0,0.2);
+  padding: 8px 16px;
+  border-radius: 10px;
+  margin-top: 40px;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
