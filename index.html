@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LiteClass - Demo</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <h1>LiteClass Demo</h1>
+  <p>📢 Audio-first remote classroom for rural colleges</p>
+
+  <!-- Audio Player -->
+  <h3>Lecture Audio</h3>
+  <audio controls>
+    <source src="lecture.mp3" type="audio/mp3">
+    Your browser does not support audio.
+  </audio>
+
+  <!-- Slides -->
+  <h3>Lecture Slides</h3>
+  <img id="slide" src="slide1.jpg" width="300"/>
+  <br/>
+  <button onclick="prevSlide()">⬅ Prev</button>
+  <button onclick="nextSlide()">Next ➡</button>
+
+  <!-- Download ZIP -->
+  <h3>Download Lecture</h3>
+  <button onclick="downloadLecture()">⬇ Download ZIP</button>
+
+  <script src="app.js"></script>
+</body>
+</html>
