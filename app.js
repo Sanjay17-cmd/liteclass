@@ -1,3 +1,7 @@
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js")
+    .then(() => console.log("Service Worker Registered"));
+}
 let slides = ["slide1.jpg", "slide2.jpg", "slide3.jpg"];
 let current = 0;
 
@@ -19,3 +23,4 @@ function nextSlide() {
 function downloadLecture() {
   alert("Lecture ZIP downloaded (demo)!");
 }
+
