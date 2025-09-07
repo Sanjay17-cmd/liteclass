@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LiteClass PWA</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <meta name="theme-color" content="#7b61ff">
+</head>
+<body>
+  <div class="app glass">
+    <h1>LiteClass</h1>
+
+    <div id="login-screen">
+      <label>Select role:</label>
+      <div class="btn-row">
+        <button id="teacher-btn">Teacher</button>
+        <button id="student-btn">Student</button>
+        <button id="admin-btn">Admin</button>
+      </div>
+    </div>
+
+    <div id="teacher-screen" class="hidden">
+      <h2>Teacher — Create Class</h2>
+      <label>Teacher name: <input id="teacher-name" placeholder="e.g. Mr. Raj"></label>
+      <label>Subject: <input id="subject" placeholder="e.g. Mathematics"></label>
+      <label>Date: <input id="date" type="date"></label>
+      <label>Time: <input id="time" type="time"></label>
+      <label>Audio file (wav/ogg/mp3): <input id="audio-file" type="file" accept="audio/*"></label>
+      <label>Slides (images multiple): <input id="slides-files" type="file" accept="image/*" multiple></label>
+      <label>Slide timings (comma-separated mm:ss for each slide): <input id="timings" placeholder="00:00,00:10,00:20"></label>
+      <div class="btn-row">
+        <button id="build-zip">Build class ZIP</button>
+        <button id="back-teacher">Back</button>
+      </div>
+      <p id="build-msg" class="muted"></p>
+    </div>
+
+    <div id="student-screen" class="hidden">
+      <h2>Student — Join Class</h2>
+      <label>Upload class ZIP: <input id="class-zip" type="file" accept=".zip"></label>
+      <div id="class-meta" class="muted"></div>
+      <div id="player" class="hidden">
+     <div class="player-controls">
+  <button id="prev-slide">⬅️ Prev</button>
+  <button id="back-10">⏪ 10s</button>
+  <button id="play">▶️ Play</button>
+  <button id="pause">⏸ Pause</button>
+  <button id="forward-10">⏩ 10s</button>
+  <button id="next-slide">➡️ Next</button>
+</div>
+
+        <div id="slide-area"><img id="slide-img" src="" alt="slide"></div>
+        <audio id="audio" controls></audio>
+      </div>
+      <button id="back-student">Back</button>
+    </div>
+
+    <div id="admin-screen" class="hidden">
+      <h2>Admin</h2>
+      <label>Password: <input id="admin-pass" type="password"></label>
+      <div class="btn-row">
+        <button id="admin-login">Login</button>
+        <button id="back-admin">Back</button>
+      </div>
+      <div id="admin-panel" class="hidden">
+        <h3>Subjects</h3>
+        <ul id="subject-list"></ul>
+        <label>New subject: <input id="new-subject"></label>
+        <button id="add-subject">Add</button>
+      </div>
+    </div>
+
+    <p class="muted small">PWA ready. Install to use offline after visiting once online.</p>
+  </div>
+
+<script src="jszip.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
