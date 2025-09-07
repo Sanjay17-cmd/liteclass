@@ -5,30 +5,30 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#317EFB">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>LiteClass - Demo</title>
+  <title>LiteClass – Student</title>
   <link rel="stylesheet" href="style.css"/>
+  <!-- JSZip for reading ZIPs -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 </head>
 <body>
   <h1>LiteClass Demo</h1>
-  <p>📢 Audio-first remote classroom for rural colleges</p>
+  <p>Audio-first classroom. Load the <b>lesson.zip</b> sent by your teacher.</p>
 
-  <!-- Audio Player -->
+  <h3>Load Lesson (.zip)</h3>
+  <input id="zipInput" type="file" accept=".zip" />
+  <p id="loadStatus"></p>
+
   <h3>Lecture Audio</h3>
-  <audio controls>
-    <source src="lecture.mp3" type="audio/mp3">
-    Your browser does not support audio.
-  </audio>
+  <audio id="player" controls preload="metadata"></audio>
 
-  <!-- Slides -->
   <h3>Lecture Slides</h3>
-  <img id="slide" src="slide1.jpg" width="300"/>
-  <br/>
-  <button onclick="prevSlide()">⬅ Prev</button>
-  <button onclick="nextSlide()">Next ➡</button>
+  <img id="slide" src="" width="300"/><br/>
+  <button id="prevBtn">⬅ Prev</button>
+  <button id="nextBtn">Next ➡</button>
 
-  <!-- Download ZIP -->
-  <h3>Download Lecture</h3>
-  <button onclick="downloadLecture()">⬇ Download ZIP</button>
+  <h3>Controls</h3>
+  <button id="startBtn">▶ Start Class</button>
+  <button id="resetBtn">⏹ Reset</button>
 
   <script src="app.js"></script>
 </body>

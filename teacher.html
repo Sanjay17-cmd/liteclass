@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>LiteClass – Teacher Tool</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="style.css" rel="stylesheet" />
+  <!-- JSZip + FileSaver from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+</head>
+<body>
+  <h1>LiteClass – Teacher Tool</h1>
+  <p>Create a small <b>lesson.zip</b> with audio + compressed slides + timestamps.</p>
+
+  <h3>1) Select Audio (MP3/WebM)</h3>
+  <input id="audioFile" type="file" accept="audio/*" />
+
+  <h3>2) Select Slides (Images)</h3>
+  <input id="slideFiles" type="file" accept="image/*" multiple />
+
+  <h3>3) Slide Times (seconds, comma-separated)</h3>
+  <p>Example: <i>0, 35, 78</i> means slide 1 at 0s, slide 2 at 35s, slide 3 at 78s.</p>
+  <input id="times" type="text" placeholder="0, 35, 78" style="width: 90%; max-width: 420px;" />
+
+  <div style="margin-top:14px;">
+    <button id="previewBtn">Preview Compression</button>
+    <button id="zipBtn">Generate ZIP</button>
+  </div>
+
+  <p id="status" style="margin-top:14px;"></p>
+
+  <script>
+    // Simple image compression to WebP
+    function compressImage(file, quality = 0.7, maxW = 1280) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        const img = new Image();
+        reader.onload = e => { img.src = e.target.result; };
+        img.onload = () => {
+          const ratio = Math.min(maxW / img.width, 1);
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(img.width * ratio);
+          canvas.height = Math.round(img.height * ratio);
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob(b => resolve(b), 'image/webp', quality);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function bytesKB(b){ return (b/1024).toFixed(1) + ' KB'; }
+
+    document.getElementById('previewBtn').onclick = async () => {
+      const slides = Array.from(document.getElementById('slideFiles').files || []);
+      if (!slides.length) { alert('Add slide images first'); return; }
+      const first = slides[0];
+      const compressed = await compressImage(first);
+      document.getElementById('status').innerText =
+        `Slide 1: original ${bytesKB(first.size)} → compressed ${(compressed ? bytesKB(compressed.size) : 'n/a')}`;
+    };
+
+    document.getElementById('zipBtn').onclick = async () => {
+      const audioFile = document.getElementById('audioFile').files[0];
+      const slideFiles = Array.from(document.getElementById('slideFiles').files || []);
+      const timesRaw = document.getElementById('times').value.trim();
+
+      if (!audioFile) { alert('Select an audio file'); return; }
+      if (!slideFiles.length) { alert('Select slide images'); return; }
+      if (!timesRaw) { alert('Enter slide times'); return; }
+
+      const times = timesRaw.split(',').map(t => Number(t.trim())).filter(n => !isNaN(n));
+      if (times.length !== slideFiles.length) {
+        alert('Number of times must equal number of slides');
+        return;
+      }
+
+      document.getElementById('status').innerText = 'Compressing slides...';
+      const zip = new JSZip();
+
+      // Add audio
+      zip.file('audio/' + audioFile.name, audioFile);
+
+      // Compress and add slides
+      const slidesMeta = [];
+      for (let i = 0; i < slideFiles.length; i++) {
+        const sf = slideFiles[i];
+        const blob = await compressImage(sf, 0.7, 1280);
+        const fname = `slides/slide${i+1}.webp`;
+        zip.file(fname, blob);
+        slidesMeta.push({ file: fname, at: times[i] });
+      }
+
+      // Manifest
+      const manifest = {
+        title: 'LiteClass Lesson',
+        audio: 'audio/' + audioFile.name,
+        slides: slidesMeta
+      };
+      zip.file('manifest.json', JSON.stringify(manifest, null, 2));
+
+      document.getElementById('status').innerText = 'Zipping...';
+      const content = await zip.generateAsync({ type: 'blob' });
+      saveAs(content, 'lesson.zip');
+      document.getElementById('status').innerText = 'Done! lesson.zip downloaded.';
+    };
+  </script>
+</body>
+</html>
