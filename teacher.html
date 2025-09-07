@@ -5,23 +5,21 @@
   <title>LiteClass – Teacher Tool</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link href="style.css" rel="stylesheet" />
-  <!-- JSZip + FileSaver from CDN -->
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 </head>
 <body>
   <h1>LiteClass – Teacher Tool</h1>
-  <p>Create a small <b>lesson.zip</b> with audio + compressed slides + timestamps.</p>
+  <p>Create a <b>lesson.zip</b> with audio, slides, and timestamps.</p>
 
-  <h3>1) Select Audio (MP3/WebM)</h3>
+  <h3>1) Select Audio</h3>
   <input id="audioFile" type="file" accept="audio/*" />
 
-  <h3>2) Select Slides (Images)</h3>
+  <h3>2) Select Slides</h3>
   <input id="slideFiles" type="file" accept="image/*" multiple />
 
   <h3>3) Slide Times (seconds, comma-separated)</h3>
-  <p>Example: <i>0, 35, 78</i> means slide 1 at 0s, slide 2 at 35s, slide 3 at 78s.</p>
-  <input id="times" type="text" placeholder="0, 35, 78" style="width: 90%; max-width: 420px;" />
+  <input id="times" type="text" placeholder="0, 35, 78" style="width:90%;max-width:420px;" />
 
   <div style="margin-top:14px;">
     <button id="previewBtn">Preview Compression</button>
@@ -31,81 +29,85 @@
   <p id="status" style="margin-top:14px;"></p>
 
   <script>
-    // Simple image compression to WebP
-    function compressImage(file, quality = 0.7, maxW = 1280) {
+    function compressImage(file, quality=0.7, maxW=1280) {
       return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        const img = new Image();
-        reader.onload = e => { img.src = e.target.result; };
+        const r = new FileReader(), img = new Image();
+        r.onload = e => img.src = e.target.result;
         img.onload = () => {
           const ratio = Math.min(maxW / img.width, 1);
-          const canvas = document.createElement('canvas');
-          canvas.width = Math.round(img.width * ratio);
-          canvas.height = Math.round(img.height * ratio);
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          canvas.toBlob(b => resolve(b), 'image/webp', quality);
+          const c = document.createElement('canvas');
+          c.width = img.width * ratio; c.height = img.height * ratio;
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          c.toBlob(b => resolve(b), 'image/webp', quality);
         };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
+        r.onerror = reject;
+        r.readAsDataURL(file);
       });
     }
+    function bytesKB(b){ return (b/1024).toFixed(1)+' KB'; }
 
-    function bytesKB(b){ return (b/1024).toFixed(1) + ' KB'; }
-
-    document.getElementById('previewBtn').onclick = async () => {
-      const slides = Array.from(document.getElementById('slideFiles').files || []);
-      if (!slides.length) { alert('Add slide images first'); return; }
-      const first = slides[0];
-      const compressed = await compressImage(first);
-      document.getElementById('status').innerText =
-        `Slide 1: original ${bytesKB(first.size)} → compressed ${(compressed ? bytesKB(compressed.size) : 'n/a')}`;
+    previewBtn.onclick = async () => {
+      const slides = [...slideFiles.files];
+      if (!slides.length) return alert('Add slides');
+      const first = slides[0], comp = await compressImage(first);
+      status.innerText = `Slide1: ${bytesKB(first.size)} → ${bytesKB(comp.size)}`;
     };
 
-    document.getElementById('zipBtn').onclick = async () => {
-      const audioFile = document.getElementById('audioFile').files[0];
-      const slideFiles = Array.from(document.getElementById('slideFiles').files || []);
-      const timesRaw = document.getElementById('times').value.trim();
+    zipBtn.onclick = async () => {
+      const audioFile = audioFileInput.files[0] || audioFile.files[0];
+      const slides = [...slideFiles.files];
+      const times = timesInput.value.trim().split(',').map(t=>+t.trim()).filter(n=>!isNaN(n));
+      if (!audioFile || !slides.length || times.length!==slides.length) return alert('Check inputs');
 
-      if (!audioFile) { alert('Select an audio file'); return; }
-      if (!slideFiles.length) { alert('Select slide images'); return; }
-      if (!timesRaw) { alert('Enter slide times'); return; }
-
-      const times = timesRaw.split(',').map(t => Number(t.trim())).filter(n => !isNaN(n));
-      if (times.length !== slideFiles.length) {
-        alert('Number of times must equal number of slides');
-        return;
-      }
-
-      document.getElementById('status').innerText = 'Compressing slides...';
+      status.innerText = 'Compressing...';
       const zip = new JSZip();
+      zip.file('audio/'+audioFile.name, audioFile);
 
-      // Add audio
-      zip.file('audio/' + audioFile.name, audioFile);
-
-      // Compress and add slides
       const slidesMeta = [];
-      for (let i = 0; i < slideFiles.length; i++) {
-        const sf = slideFiles[i];
-        const blob = await compressImage(sf, 0.7, 1280);
-        const fname = `slides/slide${i+1}.webp`;
-        zip.file(fname, blob);
-        slidesMeta.push({ file: fname, at: times[i] });
+      for (let i=0;i<slides.length;i++){
+        const b = await compressImage(slides[i]);
+        const f = `slides/slide${i+1}.webp`;
+        zip.file(f,b); slidesMeta.push({file:f,at:times[i]});
       }
 
-      // Manifest
-      const manifest = {
-        title: 'LiteClass Lesson',
-        audio: 'audio/' + audioFile.name,
-        slides: slidesMeta
-      };
-      zip.file('manifest.json', JSON.stringify(manifest, null, 2));
-
-      document.getElementById('status').innerText = 'Zipping...';
-      const content = await zip.generateAsync({ type: 'blob' });
-      saveAs(content, 'lesson.zip');
-      document.getElementById('status').innerText = 'Done! lesson.zip downloaded.';
+      zip.file('manifest.json', JSON.stringify({title:'LiteClass Lesson',audio:'audio/'+audioFile.name,slides:slidesMeta},null,2));
+      const blob = await zip.generateAsync({type:'blob'});
+      saveAs(blob,'lesson.zip');
+      status.innerText='Done! lesson.zip ready.';
     };
   </script>
+  <script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js"
+
+const SUPABASE_URL = "https://njhlttbnzadwoyjeuubx.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qaGx0dGJuemFkd295amV1dWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyMjg4OTYsImV4cCI6MjA3MjgwNDg5Nn0.FrlGEx2beL9bOPRL_BDriXkBDDyNTSzT-7LAS_eriS4";
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+async function uploadToSupabase(blob, fileName) {
+  const { data, error } = await supabase
+    .storage
+    .from("lessons")            // bucket name
+    .upload(fileName, blob, { upsert: true }); // overwrite if exists
+
+  if (error) {
+    alert("Upload failed: " + error.message);
+  } else {
+    alert("✅ Uploaded as " + fileName);
+  }
+}
+
+document.getElementById("zipBtn").onclick = async () => {
+  // ... your existing zip creation code ...
+  const content = await zip.generateAsync({ type: 'blob' });
+
+  // choose a unique filename
+  const fileName = prompt("Enter lesson file name (e.g., math_lesson1.zip):", "lesson.zip");
+
+  if (fileName) {
+    await uploadToSupabase(content, fileName);
+  }
+};
+</script>
+
 </body>
 </html>

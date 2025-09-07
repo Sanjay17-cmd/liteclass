@@ -7,12 +7,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>LiteClass – Student</title>
   <link rel="stylesheet" href="style.css"/>
-  <!-- JSZip for reading ZIPs -->
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 </head>
 <body>
   <h1>LiteClass Demo</h1>
-  <p>Audio-first classroom. Load the <b>lesson.zip</b> sent by your teacher.</p>
+  <h3>Available Lessons</h3>
+  <ul id="lessonList"></ul>
 
   <h3>Load Lesson (.zip)</h3>
   <input id="zipInput" type="file" accept=".zip" />
@@ -22,14 +22,22 @@
   <audio id="player" controls preload="metadata"></audio>
 
   <h3>Lecture Slides</h3>
-  <img id="slide" src="" width="300"/><br/>
+  <img id="slide" width="300"/><br/>
   <button id="prevBtn">⬅ Prev</button>
   <button id="nextBtn">Next ➡</button>
 
   <h3>Controls</h3>
-  <button id="startBtn">▶ Start Class</button>
+  <button id="startBtn">▶ Start</button>
   <button id="resetBtn">⏹ Reset</button>
 
-  <script src="app.js"></script>
+  <script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js"
+
+  const SUPABASE_URL = "https://njhlttbnzadwoyjeuubx.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qaGx0dGJuemFkd295amV1dWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyMjg4OTYsImV4cCI6MjA3MjgwNDg5Nn0.FrlGEx2beL9bOPRL_BDriXkBDDyNTSzT-7LAS_eriS4";
+  export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  </script>
+
+  <script type="module" src="app.js"></script>
 </body>
 </html>
