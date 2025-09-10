@@ -1,0 +1,51 @@
+{
+  "title": "Introduction to Algebra",
+  "subject": "Mathematics",
+  "teacher": "teacher@example.com",
+  "created_at": "2025-01-27T10:00:00.000Z",
+  "duration": 1800000,
+  "slides": [
+    {
+      "filename": "slide_1.jpg",
+      "originalName": "intro.jpg"
+    },
+    {
+      "filename": "slide_2.jpg", 
+      "originalName": "basics.jpg"
+    },
+    {
+      "filename": "slide_3.jpg",
+      "originalName": "examples.jpg"
+    }
+  ],
+  "slideEvents": [
+    {
+      "type": "next",
+      "slideIndex": 0,
+      "timestamp": 0,
+      "data": {}
+    },
+    {
+      "type": "next", 
+      "slideIndex": 1,
+      "timestamp": 300000,
+      "data": {}
+    },
+    {
+      "type": "annotate",
+      "slideIndex": 1,
+      "timestamp": 450000,
+      "data": {
+        "text": "Remember this formula for the exam"
+      }
+    },
+    {
+      "type": "next",
+      "slideIndex": 2, 
+      "timestamp": 900000,
+      "data": {}
+    }
+  ],
+  "version": "2.0",
+  "format": "liteclass"
+}
