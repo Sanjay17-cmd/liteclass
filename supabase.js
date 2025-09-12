@@ -3,7 +3,7 @@ const SUPABASE_URL = 'https://njhlttbnzadwoyjeuubx.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qaGx0dGJuemFkd295amV1dWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyMjg4OTYsImV4cCI6MjA3MjgwNDg5Nn0.FrlGEx2beL9bOPRL_BDriXkBDDyNTSzT-7LAS_eriS4';
 
 // Initialize Supabase client
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Auth helpers
 const auth = {
@@ -496,10 +496,10 @@ const notifications = {
 
 // Export all helpers
 window.supabaseHelpers = {
+  client: supabaseClient,
   auth,
   storage,
   database,
   realtime,
-  notifications,
-  client: supabase
+  notifications
 };

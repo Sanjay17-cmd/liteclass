@@ -18,8 +18,8 @@ const STATIC_FILES = [
 
 // Dynamic files that can be cached on demand
 const DYNAMIC_FILES = [
-  '/node_modules/@supabase/supabase-js/dist/umd/supabase.js',
-  '/node_modules/dexie/dist/dexie.js'
+  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js',
+  'https://cdn.jsdelivr.net/npm/dexie@3/dist/dexie.min.js'
 ];
 
 // Install event - cache static files
