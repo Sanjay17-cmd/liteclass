@@ -3,13 +3,13 @@ const SUPABASE_URL = 'https://njhlttbnzadwoyjeuubx.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qaGx0dGJuemFkd295amV1dWJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyMjg4OTYsImV4cCI6MjA3MjgwNDg5Nn0.FrlGEx2beL9bOPRL_BDriXkBDDyNTSzT-7LAS_eriS4';
 
 // Initialize Supabase client
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Auth helpers
 const auth = {
   async signUp(email, password, role = 'student') {
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await supabaseClient.auth.signUp({
         email,
         password,
         options: {
@@ -32,7 +32,7 @@ const auth = {
 
   async signIn(email, password) {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
         email,
         password
       });
@@ -46,7 +46,7 @@ const auth = {
 
   async signOut() {
     try {
-      const { error } = await supabase.auth.signOut();
+      const { error } = await supabaseClient.auth.signOut();
       if (error) throw error;
       return { error: null };
     } catch (error) {
@@ -56,7 +56,7 @@ const auth = {
 
   async getCurrentUser() {
     try {
-      const { data: { user }, error } = await supabase.auth.getUser();
+      const { data: { user }, error } = await supabaseClient.auth.getUser();
       if (error) throw error;
       
       if (user) {
@@ -73,7 +73,7 @@ const auth = {
 
   async createUserProfile(userId, email, role) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('profiles')
         .insert([
           {
@@ -94,7 +94,7 @@ const auth = {
 
   async getUserProfile(userId) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('profiles')
         .select('*')
         .eq('id', userId)
@@ -109,7 +109,7 @@ const auth = {
   },
 
   onAuthStateChange(callback) {
-    return supabase.auth.onAuthStateChange(callback);
+    return supabaseClient.auth.onAuthStateChange(callback);
   }
 };
 
@@ -117,7 +117,7 @@ const auth = {
 const storage = {
   async uploadLecture(file, fileName) {
     try {
-      const { data, error } = await supabase.storage
+      const { data, error } = await supabaseClient.storage
         .from('lectures')
         .upload(fileName, file, {
           cacheControl: '3600',
@@ -133,7 +133,7 @@ const storage = {
 
   async downloadLecture(fileName) {
     try {
-      const { data, error } = await supabase.storage
+      const { data, error } = await supabaseClient.storage
         .from('lectures')
         .download(fileName);
       
@@ -146,7 +146,7 @@ const storage = {
 
   async listLectures(userId = null) {
     try {
-      let query = supabase
+      let query = supabaseClient
         .from('lectures')
         .select('*')
         .order('created_at', { ascending: false });
@@ -165,7 +165,7 @@ const storage = {
 
   async deleteLecture(fileName) {
     try {
-      const { data, error } = await supabase.storage
+      const { data, error } = await supabaseClient.storage
         .from('lectures')
         .remove([fileName]);
       
@@ -177,7 +177,7 @@ const storage = {
   },
 
   getPublicUrl(fileName) {
-    const { data } = supabase.storage
+    const { data } = supabaseClient.storage
       .from('lectures')
       .getPublicUrl(fileName);
     
@@ -189,7 +189,7 @@ const storage = {
 const database = {
   async createLecture(lectureData) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('lectures')
         .insert([lectureData])
         .select()
@@ -204,7 +204,7 @@ const database = {
 
   async updateLecture(id, updates) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('lectures')
         .update(updates)
         .eq('id', id)
@@ -220,7 +220,7 @@ const database = {
 
   async getLectures(filters = {}) {
     try {
-      let query = supabase
+      let query = supabaseClient
         .from('lectures')
         .select(`
           *,
@@ -249,7 +249,7 @@ const database = {
 
   async createAssignment(assignmentData) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('assignments')
         .insert([assignmentData])
         .select()
@@ -264,7 +264,7 @@ const database = {
 
   async getAssignments(filters = {}) {
     try {
-      let query = supabase
+      let query = supabaseClient
         .from('assignments')
         .select(`
           *,
@@ -293,7 +293,7 @@ const database = {
 
   async submitAssignment(submissionData) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('assignment_submissions')
         .insert([submissionData])
         .select()
@@ -308,7 +308,7 @@ const database = {
 
   async getQuizResponses(lectureId, studentId) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('quiz_responses')
         .select('*')
         .eq('lecture_id', lectureId)
@@ -323,7 +323,7 @@ const database = {
 
   async submitQuizResponse(responseData) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('quiz_responses')
         .insert([responseData])
         .select()
@@ -338,7 +338,7 @@ const database = {
 
   async getSubjects() {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('subjects')
         .select('*')
         .order('name');
@@ -352,7 +352,7 @@ const database = {
 
   async createSubject(name) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('subjects')
         .insert([{ name }])
         .select()
@@ -367,7 +367,7 @@ const database = {
 
   async deleteSubject(id) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('subjects')
         .delete()
         .eq('id', id);
@@ -383,7 +383,7 @@ const database = {
 // Realtime helpers
 const realtime = {
   subscribeToLiveClass(classId, callback) {
-    return supabase
+    return supabaseClient
       .channel(`live_class_${classId}`)
       .on('broadcast', { event: 'slide_change' }, callback)
       .on('broadcast', { event: 'class_start' }, callback)
@@ -392,7 +392,7 @@ const realtime = {
   },
 
   broadcastSlideChange(classId, slideIndex) {
-    return supabase
+    return supabaseClient
       .channel(`live_class_${classId}`)
       .send({
         type: 'broadcast',
@@ -402,7 +402,7 @@ const realtime = {
   },
 
   broadcastClassStart(classId, lectureData) {
-    return supabase
+    return supabaseClient
       .channel(`live_class_${classId}`)
       .send({
         type: 'broadcast',
@@ -412,7 +412,7 @@ const realtime = {
   },
 
   broadcastClassEnd(classId) {
-    return supabase
+    return supabaseClient
       .channel(`live_class_${classId}`)
       .send({
         type: 'broadcast',
@@ -423,7 +423,7 @@ const realtime = {
 
   unsubscribe(subscription) {
     if (subscription) {
-      supabase.removeChannel(subscription);
+      supabaseClient.removeChannel(subscription);
     }
   }
 };
@@ -432,7 +432,7 @@ const realtime = {
 const notifications = {
   async sendNotification(userId, title, message, type = 'info') {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('notifications')
         .insert([{
           user_id: userId,
@@ -453,7 +453,7 @@ const notifications = {
 
   async getNotifications(userId) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('notifications')
         .select('*')
         .eq('user_id', userId)
@@ -469,7 +469,7 @@ const notifications = {
 
   async markAsRead(notificationId) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('notifications')
         .update({ read: true })
         .eq('id', notificationId);
@@ -482,7 +482,7 @@ const notifications = {
   },
 
   subscribeToNotifications(userId, callback) {
-    return supabase
+    return supabaseClient
       .channel(`notifications_${userId}`)
       .on('postgres_changes', {
         event: 'INSERT',
