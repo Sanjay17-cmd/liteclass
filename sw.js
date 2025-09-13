@@ -44,47 +44,42 @@ self.addEventListener("activate", event => {
 self.addEventListener("fetch", event => {
   const req = event.request;
 
-  // ignore non-GET methods
+  // Only handle GET
   if (req.method !== "GET") return;
 
-  // navigation (page loads / reloads)
-  if (req.mode === "navigate" || (req.headers.get("accept") || "").includes("text/html")) {
+  // Handle navigations (page reloads, address bar, PWA reloads)
+  if (req.mode === "navigate") {
     event.respondWith(
-      fetch(req)
-        .then(networkRes => {
-          // cache the fresh HTML response (optional)
+      caches.match("./index.html").then(cached =>
+        cached ||
+        fetch("./index.html").then(res => {
           return caches.open(CACHE_NAME).then(cache => {
-            try { cache.put(req, networkRes.clone()); } catch(e){/* ignore opaque errors */ }
-            return networkRes;
+            cache.put("./index.html", res.clone());
+            return res;
           });
         })
-        .catch(() => {
-          // fallback to index.html from cache when offline
-          return caches.match("./index.html");
-        })
+      )
     );
     return;
   }
 
-  // other assets: CSS/JS/images, etc. -> cache-first
+  // For other requests (CSS, JS, images) → cache-first
   event.respondWith(
     caches.match(req).then(cachedRes => {
       if (cachedRes) return cachedRes;
       return fetch(req)
         .then(networkRes => {
-          // cache successful responses for future
           if (!networkRes || networkRes.status !== 200) return networkRes;
           caches.open(CACHE_NAME).then(cache => {
-            try { cache.put(req, networkRes.clone()); } catch(e){/* ignore */ }
+            cache.put(req, networkRes.clone());
           });
           return networkRes;
         })
         .catch(() => {
-          // final fallback for images/icons (if missing) - try cached icon
-          if ((req.destination === "image") || req.headers.get("accept").includes("image/*")) {
+          if (req.destination === "image") {
             return caches.match("./icon-192.png");
           }
-          return new Response("",""); // minimal empty response
+          return new Response("", { status: 503, statusText: "Offline" });
         });
     })
   );
