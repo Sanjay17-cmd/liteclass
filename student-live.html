@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Live</title>
+  <link rel="icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <button onclick="goBack()">⬅ Back</button>
+  <h2>Student Live Dashboard</h2>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="join">Join Live Class</button>
+    <button class="tab-btn" data-tab="watch">Watch Recorded Live Classes</button>
+  </div>
+
+<div id="tab-join" class="tab-content active">
+  <h3>Join Live Class</h3>
+  <button onclick="joinStudent()">Join</button>
+  <video id="student-video" autoplay playsinline></video>
+  <div id="student-slide-container"></div>
+</div>
+
+  <div id="tab-watch" class="tab-content hidden">
+    <h3>Recorded Live Classes</h3>
+    <ul id="student-recorded-list"></ul>
+  </div>
+
+  <script>
+document.addEventListener("DOMContentLoaded", () => {
+  // If redirected here with a live_ file in cache, auto-load
+  const keys = Object.keys(localStorage).filter(k => k.startsWith("live_"));
+  if (keys.length > 0) {
+    const latest = keys[keys.length - 1];
+    const base64Data = localStorage.getItem(latest);
+    fetch(base64Data).then(res => res.blob()).then(blob => {
+      // Reuse loadZip from student.js (must be global or moved to utils.js)
+      if (typeof loadZip === "function") {
+        loadZip(blob);
+      }
+    });
+  }
+});
+</script>
+<script src="https://unpkg.com/@supabase/supabase-js@2.57.4/dist/umd/supabase.js"></script>
+<script src="supabase.js"></script>
+<script src="jszip.min.js"></script> <!-- optional if you handle recorded zips -->
+<script src="live.js"></script>
+  <script>
+  async function joinStudent() {
+    const videoEl = document.getElementById("student-video");
+    await window.joinStudentLive('math101', videoEl);
+  }
+</script>
+  <script>
+    function goBack() {
+      localStorage.setItem("defaultStudentTab", "polls");
+      window.location.href = "student-online.html";
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Teacher Live</title>
+  <link rel="icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <button onclick="goBack()">⬅ Back</button>
+  <h2>Teacher Live Dashboard</h2>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="liveclass">Live Class</button>
+    <button class="tab-btn" data-tab="slides">Slides</button>
+    <button class="tab-btn" data-tab="recorded">Recorded Live Classes</button>
+  </div>
+
+  <div id="tab-liveclass" class="tab-content active">
+  <h3>Live Class</h3>
+  <button onclick="startTeacherLiveUI('math101')">Start Live Class</button>
+  <video id="teacher-preview" autoplay muted playsinline></video>
+
+  <div id="teacher-live-slides"></div>
+  <button onclick="teacherChangeSlide(currentSlide - 1)">Prev</button>
+  <button onclick="teacherChangeSlide(currentSlide + 1)">Next</button>
+
+  <button onclick="stopTeacherLive()">Stop & Save</button>
+</div>
+
+<div id="tab-slides" class="tab-content hidden">
+  <h3>Upload Slides</h3>
+  <input type="file" id="live-slides" accept="image/*" multiple>
+  <button id="upload-slides">Upload Slides</button>
+</div>
+
+  <div id="tab-recorded" class="tab-content hidden">
+    <h3>Recorded Live Classes</h3>
+    <ul id="recorded-list"></ul>
+  </div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2.57.4/dist/umd/supabase.js"></script>
+<script src="supabase.js"></script>
+<script src="jszip.min.js"></script> <!-- optional if you handle recorded zips -->
+<script src="live.js"></script>
+  <script>
+  // show teacher preview
+  async function startTeacherLiveUI(classId) {
+    await window.startTeacherLive(classId);
+    document.getElementById("teacher-preview").srcObject = localStream;
+  }
+</script>
+<script>
+const CLASS_ID = "300dd5d3-058c-488f-90f8-ee02ce879531"; // 👈 replace with the UUID from classes table
+
+document.getElementById("upload-slides").addEventListener("click", async () => {
+  const files = document.getElementById("live-slides").files;
+  if (!files.length) return alert("No files selected!");
+
+  slides = [...files].map(f => URL.createObjectURL(f));
+  currentSlide = 0;
+  showSlide(currentSlide, "teacher-live-slides");
+
+  for (const file of files) {
+    // Upload file to storage
+    const { error: uploadError } = await window.supabaseHelpers.client
+      .storage.from("lectures")
+      .upload(`${CLASS_ID}/${file.name}`, file, { upsert: true });
+
+    if (uploadError) {
+      console.error("Upload failed:", uploadError.message);
+      continue;
+    }
+
+    // Insert metadata row
+    const { error: insertError } = await window.supabaseHelpers.client
+      .from("lectures")
+      .insert([{ class_id: CLASS_ID, storage_path: `${CLASS_ID}/${file.name}` }]);
+
+    if (insertError) {
+      console.error("Insert failed:", insertError.message);
+    } else {
+      console.log("Inserted lecture for:", file.name);
+    }
+  }
+
+  alert("✅ Slides uploaded!");
+});
+</script>
+
+  <script>
+    function goBack() {
+      localStorage.setItem("defaultTeacherTab", "polls");
+      window.location.href = "teacher-online.html";
+    }
+  </script>
+</body>
+</html>

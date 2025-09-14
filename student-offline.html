@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" href="icon-192.png">
+  <meta charset="UTF-8">
+  <title>Student Offline</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h2>Student Offline Mode</h2>
+
+<h3>Load Saved Class</h3>
+<button id="show-cache">Show Saved Classes</button>
+<ul id="cache-list"></ul>
+
+<h3>Or Load From File</h3>
+<input type="file" id="load-zip" accept=".zip">
+
+
+  <div id="class-info" class="hidden">
+    <h3 id="class-subject"></h3>
+    <p><strong>Teacher:</strong> <span id="class-teacher"></span></p>
+    <p><strong>Date:</strong> <span id="class-date"></span></p>
+    <p><strong>Time:</strong> <span id="class-time"></span></p>
+  </div>
+
+  <audio id="class-audio" controls></audio>
+  <div id="slides-container"></div>
+
+  <div class="controls">
+    <button id="start-btn">Start</button>
+    <button id="reset-btn">Reset</button>
+    <button id="prev-slide">Prev Slide</button>
+    <button id="next-slide">Next Slide</button>
+    <button id="back-10">-10s</button>
+    <button id="forward-10">+10s</button>
+  </div>
+
+  <button onclick="window.location.href='index.html'">Back</button>
+
+  <script src="jszip.min.js"></script>
+  <script src="student.js"></script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" href="icon-192.png">
+  <meta charset="UTF-8">
+  <title>Teacher Offline</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h2>Teacher Offline Mode</h2>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="recorder">Recorder</button>
+    <button class="tab-btn" data-tab="prerecorded">Pre-recorded</button>
+  </div>
+
+  <div id="tab-recorder" class="tab-content active">
+    <h3>Record a Live Class</h3>
+
+<label for="rec-teacher">Teacher Name:</label>
+<input type="text" id="rec-teacher" placeholder="Enter teacher name">
+
+<label for="rec-subject">Subject:</label>
+<input type="text" id="rec-subject" placeholder="Enter subject">
+
+<label for="rec-date">Date:</label>
+<input type="date" id="rec-date">
+
+<label for="rec-time">Time:</label>
+<input type="time" id="rec-time">
+
+<label for="rec-slides">Slides (multiple images):</label>
+<input type="file" id="rec-slides" accept="image/*" multiple>
+
+<div id="recorder-controls">
+    <div id="rec-status" style="margin:10px 0; font-weight:bold; color:green;"></div>
+  <button id="rec-toggle">Start</button>
+  <button id="rec-stop" disabled>Stop</button>
+</div>
+
+<div id="rec-slides-container"></div>
+<button id="rec-prev-slide" disabled>Prev Slide</button>
+<button id="rec-next-slide" disabled>Next Slide</button>
+
+<button id="rec-save" disabled>Save Offline</button>
+<button id="rec-upload" disabled>Upload Online</button>
+<ul id="rec-saved-list"></ul>
+
+  </div>
+
+<div id="tab-prerecorded" class="tab-content hidden">
+  <h3>Upload Pre-recorded</h3>
+
+  <label for="pre-teacher">Teacher Name:</label>
+  <input type="text" id="pre-teacher" placeholder="Enter teacher name">
+
+  <label for="pre-subject">Subject:</label>
+  <input type="text" id="pre-subject" placeholder="Enter subject">
+
+  <label for="pre-date">Date:</label>
+  <input type="date" id="pre-date">
+
+  <label for="pre-time">Time:</label>
+  <input type="time" id="pre-time">
+
+  <label for="pre-audio">Audio File:</label>
+  <input type="file" id="pre-audio" accept="audio/*">
+
+  <label for="pre-slides">Slides (multiple images):</label>
+  <input type="file" id="pre-slides" accept="image/*" multiple>
+
+  <label for="pre-timeline">Slide Timeline</label>
+  <textarea id="pre-timeline" placeholder="00:00 -> 1
+00:10 -> 2
+00:20 -> 3"></textarea>
+
+  <button id="pre-save">Save Offline</button>
+  <button id="pre-list">Show Saved Classes</button>
+  <ul id="pre-saved-list"></ul>
+  <div id="pre-status" style="margin:10px 0; font-weight:bold; color:green;"></div>
+</div>
+
+
+
+  <button onclick="window.location.href='index.html'">Back</button>
+
+  <script src="jszip.min.js"></script>
+  <script src="teacher.js"></script>
+</body>
+</html>

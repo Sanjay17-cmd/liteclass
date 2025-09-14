@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a73e8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RemoteClass</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>RemoteClass</h1>
+
+  <!-- Login Form -->
+  <div id="login-container">
+    <label for="username">Username</label>
+    <input type="text" id="username" placeholder="Enter username">
+
+    <label for="password">Password</label>
+    <input type="password" id="password" placeholder="Enter password">
+
+    <label for="role">Role</label>
+    <select id="role">
+      <option value="student">Student</option>
+      <option value="teacher">Teacher</option>
+    </select>
+
+    <div class="btn-group">
+      <button id="login-btn">Login</button>
+      <button id="signup-btn">Sign Up</button>
+    </div>
+
+    <div class="btn-group">
+      <button id="offline-student">Continue Offline (Student)</button>
+      <button id="offline-teacher">Continue Offline (Teacher)</button>
+    </div>
+  </div>
+
+  <!-- load Supabase client first -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2.57.4/dist/umd/supabase.js"></script>
+  <script src="supabase.js"></script>
+  <script src="app.js"></script>
+
+  <!-- Service Worker (relative path) -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("sw.js")
+        .then(() => console.log("✅ Service Worker registered"))
+        .catch(err => console.error("SW registration failed:", err));
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+body {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  background: #f5f7fa;
+}
+
+h1, h2 {
+  color: #333;
+}
+
+.hidden {
+  display: none;
+}
+
+.tabs {
+  margin-bottom: 10px;
+}
+
+.tab-btn {
+  padding: 8px 12px;
+  margin-right: 5px;
+  border: none;
+  background: #ccc;
+  cursor: pointer;
+}
+
+.tab-content {
+  margin-top: 15px;
+}
+.tab-btn.active {
+  background: #ddd; /* highlight active tab */
+}
+.tab-content.active {
+  display: block;
+}
