@@ -49,15 +49,20 @@ self.addEventListener("fetch", event => {
 
   // Handle navigations (page reloads, address bar, PWA reloads)
   if (req.mode === "navigate") {
+    // Get the requested page (e.g., student-online.html, teacher-online.html)
+    const url = new URL(req.url);
+    let page = url.pathname.split("/").pop() || "index.html";
+    if (!page.endsWith(".html")) page = "index.html";
+
     event.respondWith(
-      caches.match("./index.html").then(cached =>
+      caches.match("./" + page).then(cached =>
         cached ||
-        fetch("./index.html").then(res => {
+        fetch("./" + page).then(res => {
           return caches.open(CACHE_NAME).then(cache => {
-            cache.put("./index.html", res.clone());
+            cache.put("./" + page, res.clone());
             return res;
           });
-        })
+        }).catch(() => caches.match("./index.html"))
       )
     );
     return;
