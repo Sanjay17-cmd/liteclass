@@ -336,27 +336,50 @@ refreshQueue();
 // -----------------------------
 // Assignments
 // -----------------------------
+// -----------------------------
+// Assignments
+// -----------------------------
 const { assignments } = window.supabaseHelpers;
 
-// Handle assignments
 document.getElementById("create-assignment")?.addEventListener("click", async () => {
-  const title = prompt("Assignment title?"); // later: proper form
-  const desc = "";
-  const dueDate = "";
-  const user = JSON.parse(localStorage.getItem("remoteclass_user"));
-  if (!title) return;
+  const subject = document.getElementById("ass-subject").value.trim();
+  const instructions = document.getElementById("ass-instructions").value.trim();
+  const fileInput = document.getElementById("ass-file");
+  const file = fileInput.files[0];
 
+  if (!subject || !instructions || !file) {
+    alert("⚠️ Please fill all fields and select a file");
+    return;
+  }
+
+  const user = JSON.parse(localStorage.getItem("remoteclass_user"));
+  const fileName = "ass_" + Date.now() + "_" + file.name;
+
+  // 1. Upload file to storage
+  const { error: uploadError } = await window.supabaseHelpers.client
+    .storage.from("assignments")
+    .upload(fileName, file);
+
+  if (uploadError) {
+    alert("❌ Upload failed: " + uploadError.message);
+    return;
+  }
+
+  // 2. Save record in DB
   const { error } = await assignments.create({
-    class_id: null,
     teacher_id: user.id,
-    title,
-    description: desc,
-    due_date: dueDate
+    subject,
+    instructions,
+    file_path: fileName
   });
 
   if (error) {
     alert("❌ Assignment error: " + error.message);
   } else {
+    alert("✅ Assignment posted!");
+    document.getElementById("ass-subject").value = "";
+    document.getElementById("ass-instructions").value = "";
+    fileInput.value = "";
     loadAssignments();
   }
 });
@@ -365,13 +388,158 @@ async function loadAssignments() {
   const list = document.getElementById("assignment-list");
   if (!list) return;
   list.innerHTML = "";
-  const { data } = await assignments.listForClass(null);
+
+  const { data, error } = await assignments.listAll();
+  if (error) {
+    console.error("Assignments load error:", error);
+    return;
+  }
+
+  const grouped = {};
   (data || []).forEach(a => {
-    const li = document.createElement("li");
-    li.textContent = `${a.title} (Due: ${a.due_date})`;
-    list.appendChild(li);
+    if (!grouped[a.subject]) grouped[a.subject] = [];
+    grouped[a.subject].push(a);
+  });
+
+  for (const subject of Object.keys(grouped)) {
+    const container = document.createElement("div");
+    container.classList.add("assignment-group");
+
+    const header = document.createElement("h3");
+    header.innerHTML = `
+      ${subject}
+      <button onclick="toggleAssignments('${subject}-list')">Show/Hide</button>
+    `;
+    container.appendChild(header);
+
+    const ul = document.createElement("ul");
+    ul.id = `${subject}-list`;
+    ul.style.display = "none";
+
+    for (const a of grouped[subject]) {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <b>${a.instructions}</b>
+        <br>
+        <button onclick="downloadAssignmentFile('${a.file_path}')">Download</button>
+        <div id="submissions-${a.id}">Loading submissions...</div>
+      `;
+      ul.appendChild(li);
+
+      // fetch submissions for this assignment
+      loadSubmissions(a.id);
+    }
+
+    container.appendChild(ul);
+    list.appendChild(container);
+  }
+}
+
+async function loadSubmissions(assignmentId) {
+  const target = document.getElementById(`submissions-${assignmentId}`);
+  if (!target) return;
+
+  const { data, error } = await window.supabaseHelpers.submissions.listForAssignment(assignmentId);
+
+  if (error) {
+  console.error("❌ Submissions load error:", error);
+  target.textContent = "Failed to load submissions";
+  return;
+}
+
+  if (!data || data.length === 0) {
+    target.textContent = "No submissions yet.";
+    return;
+  }
+
+  target.innerHTML = "";
+  data.forEach(s => {
+    const div = document.createElement("div");
+    div.innerHTML = `
+      👤 Student ID: ${s.student_id}<br>
+      📝 Answer: ${s.answer || "(no text)"}<br>
+      ${s.file_path ? `<a href="#" onclick="downloadSubmissionFile('${s.file_path}')">📄 Download File</a><br>` : ""}
+      🎯 Marks: <input type="number" id="marks-${s.id}" value="${s.marks ?? ""}" style="width:60px">
+      <button onclick="saveMarks(${s.id})">Save</button>
+      <hr>
+    `;
+    target.appendChild(div);
   });
 }
+
+async function downloadSubmissionFile(filePath) {
+  const { data, error } = await window.supabaseHelpers.client
+    .storage.from("submissions")
+    .download(filePath);
+
+  if (error) {
+    alert("❌ Download failed: " + error.message);
+    return;
+  }
+  const url = URL.createObjectURL(data);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filePath;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function saveMarks(submissionId) {
+  const marks = document.getElementById(`marks-${submissionId}`).value;
+  const { error } = await window.supabaseHelpers.client
+    .from("submissions")
+    .update({ marks: parseInt(marks) })
+    .eq("id", submissionId);
+
+  if (error) {
+    alert("❌ Failed to save marks: " + error.message);
+  } else {
+    alert("✅ Marks saved!");
+  }
+}
+
+
+// Toggle function
+function toggleAssignments(id) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.style.display = (el.style.display === "none") ? "block" : "none";
+  }
+}
+
+// Auto-load assignments on page load
+window.addEventListener("DOMContentLoaded", () => {
+  loadAssignments();
+});
+
+
+function toggleAssignments(id) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.style.display = (el.style.display === "none") ? "block" : "none";
+  }
+}
+
+async function downloadAssignmentFile(filePath) {
+  const { data, error } = await window.supabaseHelpers.client
+    .storage.from("assignments")
+    .download(filePath);
+
+  if (error) {
+    alert("❌ Download failed: " + error.message);
+    return;
+  }
+
+  const url = URL.createObjectURL(data);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filePath;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 
 // -----------------------------
 // Quizzes (use the new form you made)
@@ -739,5 +907,6 @@ if (pollListEl) pollListEl.style.display = "none";
 
 // Run once on page load
 loadPolls();
+
 
 

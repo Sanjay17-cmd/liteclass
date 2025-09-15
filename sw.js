@@ -48,44 +48,45 @@ self.addEventListener("fetch", event => {
   if (req.method !== "GET") return;
 
   // Handle navigations (page reloads, address bar, PWA reloads)
-  if (req.mode === "navigate") {
-    // Get the requested page (e.g., student-online.html, teacher-online.html)
-    const url = new URL(req.url);
-    let page = url.pathname.split("/").pop() || "index.html";
-    if (!page.endsWith(".html")) page = "index.html";
+if (req.mode === "navigate") {
+  const url = new URL(req.url);
+  let page = url.pathname.split("/").pop() || "index.html";
+  if (!page.endsWith(".html")) page = "index.html";
 
-    event.respondWith(
-      caches.match("./" + page).then(cached =>
-        cached ||
-        fetch("./" + page).then(res => {
-          return caches.open(CACHE_NAME).then(cache => {
-            cache.put("./" + page, res.clone());
-            return res;
-          });
-        }).catch(() => caches.match("./index.html"))
-      )
-    );
-    return;
-  }
-
-  // For other requests (CSS, JS, images) → cache-first
   event.respondWith(
-    caches.match(req).then(cachedRes => {
-      if (cachedRes) return cachedRes;
-      return fetch(req)
-        .then(networkRes => {
-          if (!networkRes || networkRes.status !== 200) return networkRes;
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(req, networkRes.clone());
-          });
-          return networkRes;
-        })
-        .catch(() => {
-          if (req.destination === "image") {
-            return caches.match("./icon-192.png");
-          }
-          return new Response("", { status: 503, statusText: "Offline" });
+    caches.match("./" + page).then(cached =>
+      cached ||
+      fetch("./" + page).then(res => {
+        const resClone = res.clone();
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put("./" + page, resClone);
         });
-    })
+        return res;
+      }).catch(() => caches.match("./index.html"))
+    )
   );
+  return;
+}
+
+// For other requests (CSS, JS, images) → cache-first
+event.respondWith(
+  caches.match(req).then(cachedRes => {
+    if (cachedRes) return cachedRes;
+    return fetch(req)
+      .then(networkRes => {
+        if (!networkRes || networkRes.status !== 200) return networkRes;
+        const resClone = networkRes.clone(); // ✅ clone before caching
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(req, resClone);
+        });
+        return networkRes; // ✅ safe to return
+      })
+      .catch(() => {
+        if (req.destination === "image") {
+          return caches.match("./icon-192.png");
+        }
+        return new Response("", { status: 503, statusText: "Offline" });
+      });
+  })
+);
 });

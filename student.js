@@ -196,73 +196,157 @@ if (loadZipInput) {
 const { db, storage, assignments, quizzes, polls } = window.supabaseHelpers;
 
 // Load classes for student
-async function loadStudentClasses() {
-  const list = document.getElementById("student-class-list");
-  if (!list) return;
-
-  list.innerHTML = "";
-  const user = JSON.parse(localStorage.getItem("remoteclass_user"));
-  const { data, error } = await db.getClasses("student", user.id);
-
-  if (error) {
-    list.innerHTML = `<li>❌ Error: ${error.message}</li>`;
-    return;
-  }
-
-  (data || []).forEach(c => {
-    const li = document.createElement("li");
-    li.textContent = `${c.subject} (by teacher ${c.teacher_id})`;
-
-    const viewBtn = document.createElement("button");
-    viewBtn.textContent = "View Lectures";
-    viewBtn.onclick = async () => {
-      const { data: lectures } = await db.getLectures(c.id);
-      if (!lectures || lectures.length === 0) {
-        alert("No lectures yet for this class");
-        return;
-      }
-      // 👉 Show first lecture (later: let student choose)
-      const lec = lectures[0];
-      const { data: blob } = await storage.downloadAsBlob(lec.storage_path);
-      loadZip(blob); // reuse offline player
-    };
-
-    li.appendChild(viewBtn);
-    list.appendChild(li);
-  });
-}
-
-// Run on page load (online mode)
-if (document.getElementById("student-class-list")) {
-  loadStudentClasses();
-}
+let isLoadingAssignments = false; // prevent duplicate loads
 
 async function loadStudentAssignments() {
-  const list = document.getElementById("student-assignment-list");
-  list.innerHTML = "";
+  if (isLoadingAssignments) return; // stop duplicate calls
+  isLoadingAssignments = true;
 
-  const { data, error } = await assignments.listForClass(null); // later link with real classId
+  const list = document.getElementById("student-assignment-list");
+  if (!list) return;
+  list.innerHTML = "<li>⏳ Loading assignments...</li>";
+
+  const user = JSON.parse(localStorage.getItem("remoteclass_user"));
+
+  // Fetch all assignments
+  const { data: assignmentsData, error } = await assignments.listAll();
   if (error) {
-    list.innerHTML = `<li>❌ Error: ${error.message}</li>`;
+    list.innerHTML = `<li>❌ Error loading assignments: ${error.message}</li>`;
+    isLoadingAssignments = false;
     return;
   }
 
-  (data || []).forEach(a => {
-    const li = document.createElement("li");
-    li.textContent = `${a.title} (Due: ${a.due_date})`;
+  // Fetch student's submissions
+  const { data: submissions } = await supabaseHelpers.client
+    .from("submissions")
+    .select("*")
+    .eq("student_id", user.id);
 
-    const submitBtn = document.createElement("button");
-    submitBtn.textContent = "Submit";
-    submitBtn.onclick = () => {
-      const ans = prompt("Enter your answer / upload link:");
-      if (ans) alert("✅ Answer submitted (placeholder)"); 
-      // TODO: create `submissions` table in DB
+  const mySubs = submissions || [];
+
+  // Split into posted & completed
+  const posted = [];
+  const completed = [];
+
+  (assignmentsData || []).forEach(a => {
+    const sub = mySubs.find(s => s.assignment_id === a.id);
+    if (sub) {
+      completed.push({ a, sub });
+    } else {
+      posted.push(a);
+    }
+  });
+
+  list.innerHTML = ""; // clear after data ready
+
+  // ---------------- 📌 Posted Assignments ----------------
+  if (posted.length > 0) {
+    const postedHeader = document.createElement("h4");
+    postedHeader.textContent = "📌 Posted Assignments";
+    list.appendChild(postedHeader);
+
+    posted.forEach(a => {
+      const div = document.createElement("div");
+      div.classList.add("assignment-card");
+
+      // fallback title if missing
+      const title = a.title || a.instructions?.slice(0, 30) || "Untitled Assignment";
+
+      div.innerHTML = `
+        <strong>${title}</strong> (${a.subject || "No subject"})<br>
+        ${a.instructions || "No instructions"}<br>
+        Due: ${a.due_date || "No due date"}<br>
+      `;
+
+      // Answer textarea
+      const textInput = document.createElement("textarea");
+      textInput.placeholder = "Write your answer here...";
+
+      // File upload
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+
+      // Submit button
+      const submitBtn = document.createElement("button");
+      submitBtn.textContent = "Upload & Submit";
+      submitBtn.onclick = async () => {
+        const file = fileInput.files[0];
+        let filePath = null;
+        if (file) {
+          filePath = `submissions/${user.username}_${a.id}_${file.name}`;
+          await window.supabaseHelpers.client
+  .storage.from("submissions")
+  .upload(filePath, file, { upsert: true });
+        }
+
+     const { data, error } = await supabaseHelpers.submissions.create({
+  assignment_id: a.id,
+  student_id: user.id,
+  answer_text: textInput.value,
+  file_path: filePath,
+  status: "submitted"
+});
+
+if (error) {
+  console.error("❌ Submission insert error:", error);
+  alert("Submission failed: " + error.message);
+}
+
+
+        alert("✅ Submitted!");
+        loadStudentAssignments(); // refresh after submit
+      };
+
+      div.appendChild(textInput);
+      div.appendChild(fileInput);
+      div.appendChild(submitBtn);
+
+      list.appendChild(div);
+    });
+  }
+
+  // ---------------- ✅ Completed Assignments ----------------
+  if (completed.length > 0) {
+    const toggleBtn = document.createElement("button");
+    toggleBtn.textContent = "Show Completed Assignments";
+    let showing = false;
+
+    const container = document.createElement("div");
+    container.style.display = "none";
+
+    toggleBtn.onclick = () => {
+      showing = !showing;
+      container.style.display = showing ? "block" : "none";
+      toggleBtn.textContent = showing
+        ? "Hide Completed Assignments"
+        : "Show Completed Assignments";
     };
 
-    li.appendChild(submitBtn);
-    list.appendChild(li);
-  });
+    list.appendChild(toggleBtn);
+    list.appendChild(container);
+
+    completed.forEach(({ a, sub }) => {
+      const div = document.createElement("div");
+      div.classList.add("assignment-card");
+
+      const title = a.title || a.instructions?.slice(0, 30) || "Untitled Assignment";
+
+      div.innerHTML = `
+        <strong>${title}</strong> (${a.subject || "No subject"})<br>
+        ${a.instructions || "No instructions"}<br>
+        ✅ Submitted on ${new Date(sub.created_at).toLocaleString()}<br>
+        📄 File: ${sub.file_path ? `<a href="${sub.file_path}" target="_blank">Download</a>` : "None"}<br>
+        📝 Answer: ${sub.answer_text || "N/A"}<br>
+        🎯 Marks: ${sub.marks !== null ? sub.marks : "Pending"}
+      `;
+
+      container.appendChild(div);
+    });
+  }
+
+  isLoadingAssignments = false; // release lock
 }
+
 
 let quizzesLoading = false;
 async function loadStudentQuizzes() {
@@ -496,61 +580,51 @@ if (document.getElementById("student-poll-list")) loadStudentPolls();
 // DOWNLOAD & UPLOAD QUEUE
 // -----------------------------
 async function loadTeacherUploads() {
-  const list = document.getElementById("teacher-upload-list");
-  if (!list) return;
-  list.innerHTML = "";
-
-  const CLASS_ID = "300dd5d3-058c-488f-90f8-ee02ce879531"; // 👈 same UUID as above
-
-  const { data, error } = await window.supabaseHelpers.client
-    .from("lectures")
-    .select("*")
-    .eq("class_id", CLASS_ID);
+  // List all files in the bucket/folder
+const { data: files, error } = await window.supabaseHelpers.client
+  .storage.from("lectures")
+  .list("", { limit: 100, offset: 0 }); // list from root
 
   if (error) {
-    list.innerHTML = `<li>❌ Error: ${error.message}</li>`;
+    console.error("Error loading files:", error);
     return;
   }
 
-  (data || []).forEach(item => {
-    const li = document.createElement("li");
-    li.textContent = `${item.storage_path}`;
+  // Filter out cached files
+const downloadedKeys = Object.keys(localStorage).filter(k => k.endsWith(".zip"));
+const available = (files || []).filter(file => !downloadedKeys.includes(file.name));
 
-    // Cache download
-    const cacheBtn = document.createElement("button");
-    cacheBtn.textContent = "Save to Cache";
-    cacheBtn.onclick = async () => {
-      const blob = await storage.downloadAsBlob(item.storage_path);
-      const base64 = await blobToDataURL(blob);
-      localStorage.setItem(item.storage_path, base64);
-      alert("✅ Saved to cache: " + item.storage_path);
+  // Update UI with available files
+  const list = document.getElementById("teacher-upload-list"); // <-- FIXED ID
+  list.innerHTML = "";
+  if (available.length === 0) {
+    list.innerHTML = "<li>No available uploads</li>";
+    return;
+  }
+  available.forEach(file => {
+  const li = document.createElement("li");
+  li.textContent = file.name + " ";
 
-      if (item.storage_path.startsWith("live_") || item.storage_path.includes("recorded_live")) {
-        localStorage.setItem("defaultStudentTab", "classes");
-        window.location.href = "student-live.html";
-      }
-    };
+  const cacheBtn = document.createElement("button");
+  cacheBtn.textContent = "Save to Cache";
+  cacheBtn.style.marginLeft = "10px";
+  cacheBtn.onclick = () => saveToCache(file.name);
 
-    // Device download
-    const deviceBtn = document.createElement("button");
-    deviceBtn.textContent = "Download to Device";
-    deviceBtn.onclick = async () => {
-      const blob = await storage.downloadAsBlob(item.storage_path);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = item.storage_path.split("/").pop();
-      a.click();
-      URL.revokeObjectURL(url);
-    };
+  const downloadBtn = document.createElement("button");
+  downloadBtn.textContent = "Download";
+  downloadBtn.style.marginLeft = "5px";
+  downloadBtn.onclick = () => downloadFile(file.name);
 
-    li.appendChild(cacheBtn);
-    li.appendChild(deviceBtn);
-    list.appendChild(li);
-  });
+  li.appendChild(cacheBtn);
+  li.appendChild(downloadBtn);
+  list.appendChild(li);
+});
+
 }
 
-
+// Call this function when you want to refresh the uploads list
+// e.g., on page load or when switching tabs
+loadTeacherUploads();
 
 // Convert Blob → Base64 DataURL
 function blobToDataURL(blob) {
@@ -561,6 +635,49 @@ function blobToDataURL(blob) {
     reader.readAsDataURL(blob);
   });
 }
+
+// Save a file to localStorage
+async function saveToCache(fileName) {
+  const { data, error } = await window.supabaseHelpers.client
+    .storage.from("lectures")
+    .download(fileName);
+
+  if (error) {
+    console.error("Error downloading file:", error.message);
+    return;
+  }
+
+  const blob = data;
+  const reader = new FileReader();
+  reader.onload = () => {
+    localStorage.setItem(fileName, reader.result);
+    alert(`${fileName} cached successfully`);
+    loadTeacherUploads(); // refresh lists
+  };
+  reader.readAsDataURL(blob);
+}
+
+// Download file directly
+async function downloadFile(fileName) {
+  const { data, error } = await window.supabaseHelpers.client
+    .storage.from("lectures")
+    .download(fileName);
+
+  if (error) {
+    console.error("Error downloading:", error.message);
+    return;
+  }
+
+  const url = URL.createObjectURL(data);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 
 // Assignment Uploads
 async function loadAssignmentUploads() {

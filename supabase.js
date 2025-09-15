@@ -34,6 +34,22 @@ window.supabaseHelpers = {
     createLecture: async (obj) => supabaseClient.from('lectures').insert(obj).select()
   },
 
+submissions: {
+  create: async (s) => {
+    return await supabaseClient.from("submissions").insert(s).select().single();
+  },
+  listForAssignment: async (assignmentId) => {
+    return await supabaseClient.from("submissions").select("*").eq("assignment_id", assignmentId);
+  },
+  listForStudent: async (studentId) => {
+    return await supabaseClient.from("submissions").select("*").eq("student_id", studentId);
+  },
+  updateMarks: async (submissionId, marks) => {
+    return await supabaseClient.from("submissions").update({ marks }).eq("id", submissionId);
+  }
+},
+
+
   // Storage helpers for lecture zips
   storage: {
     uploadLecture: async (fileBlob, path) => {
@@ -61,15 +77,21 @@ window.supabaseHelpers = {
 }
 
   },
-  assignments: {
-    create: async (a) => supabaseClient.from('assignments').insert(a).select(),
-    listForClass: async (classId) => {
-  if (!classId) {
-    return supabaseClient.from('assignments').select('*');
-  }
-  return supabaseClient.from('assignments').select('*').eq('class_id', classId);
-}
+assignments: {
+  create: async (a) => supabaseClient.from('assignments').insert(a).select(),
+  listForClass: async (classId) => {
+    if (!classId) {
+      return supabaseClient.from('assignments').select('*');
+    }
+    return supabaseClient.from('assignments').select('*').eq('class_id', classId);
   },
+  listAll: async () => {
+    return await supabaseClient
+      .from("assignments")
+      .select("*")
+      .order("created_at", { ascending: false });
+  }
+},
   polls: {
   create: async (p) => supabaseClient.from("polls").insert(p).select().single(),
   listAll: async () => supabaseClient.from("polls").select("*")

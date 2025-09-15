@@ -103,11 +103,23 @@
   </div>
 
   <!-- Assignments tab -->
-  <div id="tab-assignments" class="tab-content hidden">
-    <h3>Assignments</h3>
-    <button id="create-assignment">+ New Assignment</button>
-    <ul id="assignment-list"></ul>
-  </div>
+ <div id="tab-assignments" class="tab-content hidden">
+  <h3>Assignments</h3>
+
+  <label>Subject:</label>
+  <input type="text" id="ass-subject" placeholder="Enter subject">
+
+  <label>Instructions:</label>
+  <textarea id="ass-instructions" placeholder="Enter assignment instructions"></textarea>
+
+  <label>Assignment File:</label>
+  <input type="file" id="ass-file">
+
+  <button id="create-assignment">Post Assignment</button>
+
+  <h4>Posted Assignments</h4>
+  <ul id="assignment-list"></ul>
+</div>
 
   <!-- Quizzes tab -->
   <div id="tab-quizzes" class="tab-content hidden">
